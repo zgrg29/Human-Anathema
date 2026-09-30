@@ -1,4 +1,4 @@
 {
-  "village_shop": {"id": "village_shop", "name": "桥下杂货铺", "locations": ["rookie_village"], "stock": ["small_round", "bandage", "flash_bomb", "fire_axe", "scrap_plate"], "buyback": {"wolf_fang": 4, "wolf_hide": 6, "wolf_blood": 8}, "rest_cost": 0},
+  "village_shop": {"id": "village_shop", "name": "桥下杂货铺", "locations": ["rookie_village"], "stock": ["small_round", "bandage", "flash_bomb", "fire_axe", "scrap_plate", "crowbar", "pump_shotgun"], "buyback": {"wolf_fang": 4, "wolf_hide": 6, "wolf_blood": 8, "small_round": 1, "bandage": 3, "flash_bomb": 5, "fire_axe": 11, "scrap_plate": 16, "crowbar": 9, "pump_shotgun": 18}, "rest_cost": 0},
   "net_cafe": {"id": "net_cafe", "name": "存档点网咖", "locations": ["rookie_village"], "rest_cost": 8, "restores": ["hp", "mp"]}
 }

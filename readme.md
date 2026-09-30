@@ -32,4 +32,4 @@
 
 ## 可运行原型
 
-当前新手村文字版可用 `py -m human_anathema.cli` 启动；Godot 对接用的本地 HTTP/JSON API 可用 `py -m human_anathema.api` 启动。两者使用同一套 `human_anathema.engine` 规则核心和 `data/*.json` 内容定义。
+当前新手村文字版可用 `py -m human_anathema.cli` 启动；行动菜单使用 1–9 数字选择，只有购买/出售数量提示接受任意正整数，出售数量超过持有量时自动按全部出售。首胜奖励和训练点仅首次结算，已完成遭遇可重玩但不重复发放奖励；网咖休息会恢复 HP、MP 和 Shield。战斗失败会恢复进入战斗前的状态，战前快照随存档保存。Godot 对接用的本地 HTTP/JSON API 可用 `py -m human_anathema.api` 启动。两者使用同一套 `human_anathema.engine` 规则核心和 `data/*.json` 内容定义。

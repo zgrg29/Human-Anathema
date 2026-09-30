@@ -1,3 +1,5 @@
 {
-  "drain_hound": {"id": "drain_hound", "name": "水渠幼猎犬", "enemy_id": "drain_hound", "location_id": "rookie_village", "difficulty": "intro", "description": "一只瘦小的猎犬从排水渠中窜出。"}
+  "drain_hound": {"id": "drain_hound", "name": "水渠幼猎犬", "enemy_id": "drain_hound", "location_id": "rookie_village", "difficulty": "intro", "coin_reward": 24, "description": "一只瘦小的猎犬从排水渠中窜出。"},
+  "sewer_scavenger": {"id": "sewer_scavenger", "name": "污渠拾骨者", "enemy_id": "sewer_scavenger", "location_id": "rookie_village", "difficulty": "standard", "coin_reward": 30, "description": "它用骨钩护住胸前的硬壳，动作却并不灵活。"},
+  "rust_bruiser": {"id": "rust_bruiser", "name": "锈甲搬运工", "enemy_id": "rust_bruiser", "location_id": "rookie_village", "difficulty": "hard", "coin_reward": 38, "description": "它的锈甲很难击穿，但每次蓄力都会露出破绽。"}
 }
