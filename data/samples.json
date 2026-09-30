@@ -1,0 +1,3 @@
+{
+  "wolf_blood": {"id": "wolf_blood", "name": "猎犬体液样本", "source_enemy": "drain_hound", "heal": 4, "mp_max": 4, "mp_restore": 4, "corruption_gain": 20, "grants_magic": ["blood_pulse"], "grants_skills": [], "buffs": [{"buff_id": "predator_surge", "duration": 3}]}
+}

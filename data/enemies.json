@@ -1,0 +1,11 @@
+{
+  "drain_hound": {
+    "id": "drain_hound", "name": "渠沟幼猎犬", "kind": "monster", "hp": 18, "shield": 0,
+    "attributes": {"physical_attack": 4, "magic_attack": 0, "defense": 1, "speed": 3},
+    "moves": {
+      "basic_attack": {"id": "hound_bite", "name": "试探撕咬", "power": 0, "damage_type": "physical"},
+      "heavy_attack": {"id": "hound_lunge", "name": "蓄力扑咬", "power": 3, "damage_type": "physical"}
+    },
+    "drops": {"wolf_fang": 1, "wolf_hide": 1}
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "service_pistol": {"id": "service_pistol", "name": "旧式短枪", "slot": "weapon", "attack": 4, "ammo_item": "small_round", "buy_price": 24, "tags": ["ranged"]},
+  "fire_axe": {"id": "fire_axe", "name": "消防斧", "slot": "weapon", "attack": 6, "buy_price": 22, "tags": ["melee", "heavy"]},
+  "patched_vest": {"id": "patched_vest", "name": "补丁防弹衣", "slot": "armor", "shield": 5, "buy_price": 20, "tags": ["light"]},
+  "scrap_plate": {"id": "scrap_plate", "name": "拼接护板", "slot": "armor", "shield": 8, "buy_price": 32, "tags": ["heavy"]}
+}

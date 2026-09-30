@@ -1,0 +1,9 @@
+{
+  "protagonist": {
+    "id": "protagonist", "name": "林", "kind": "human", "level": null,
+    "hp": 12, "attributes": {"max_hp": 12, "physical_attack": 3, "magic_attack": 0, "defense": 1, "speed": 5},
+    "mp": 0, "mp_max": 0, "ap": 3, "ap_max": 3, "shield": 5, "shield_max": 5,
+    "alignment": {"law_chaos": 0, "justice_evil": 0}, "corruption": 0, "experience_notes": 0,
+    "guarding": false
+  }
+}

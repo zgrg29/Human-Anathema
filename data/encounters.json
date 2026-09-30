@@ -1,0 +1,3 @@
+{
+  "drain_hound": {"id": "drain_hound", "name": "水渠幼猎犬", "enemy_id": "drain_hound", "location_id": "rookie_village", "difficulty": "intro", "description": "一只瘦小的猎犬从排水渠中窜出。"}
+}

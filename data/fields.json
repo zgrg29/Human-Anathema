@@ -1,0 +1,3 @@
+{
+  "rookie_drain": {"id": "rookie_drain", "name": "废弃水渠", "location_id": "rookie_village", "terrain_tags": ["urban_ruin", "narrow", "wet"], "rules": {"cover": false, "hazards": []}, "description": "视线受阻的狭窄水渠；当前原型以纯文字描述场地，不做格子移动。"}
+}

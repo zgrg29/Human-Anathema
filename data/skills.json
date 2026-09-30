@@ -1,0 +1,3 @@
+{
+  "aimed_shot": {"id": "aimed_shot", "name": "瞄准射击", "description": "消耗 1 AP 与 1 发弹药，造成额外伤害。", "ap_cost": 1, "power": 3, "ammo_item": "small_round", "target": "single_enemy"}
+}

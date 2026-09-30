@@ -1,0 +1,3 @@
+{
+  "rookie_village": {"id": "rookie_village", "name": "灰桥新手村", "description": "临时据点围着一座旧公路桥搭建。村外水渠里偶尔有幼年怪物游荡。", "facilities": ["village_shop", "net_cafe"], "encounters": ["drain_hound"]}
+}

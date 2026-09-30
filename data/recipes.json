@@ -1,0 +1,4 @@
+{
+  "extract_hound_blood": {"id": "extract_hound_blood", "name": "提取猎犬体液", "kind": "extract", "facility_id": "village_shop", "inputs": {"wolf_fang": 1, "wolf_hide": 1}, "outputs": {"wolf_blood": 1}},
+  "craft_scrap_plate": {"id": "craft_scrap_plate", "name": "制作拼接护板", "kind": "craft", "facility_id": "village_shop", "inputs": {"wolf_hide": 2, "wolf_fang": 1}, "outputs": {"scrap_plate": 1}}
+}

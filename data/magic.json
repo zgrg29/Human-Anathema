@@ -1,0 +1,3 @@
+{
+  "blood_pulse": {"id": "blood_pulse", "name": "血色脉冲", "description": "以异变魔力冲击单个目标。", "mp_cost": 2, "power": 7, "element": "blood", "target": "single_enemy"}
+}

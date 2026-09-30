@@ -1,0 +1,13 @@
+{
+  "hp": {"id": "hp", "name": "生命", "type": "resource", "min": 0, "description": "降至 0 时倒下。"},
+  "mp": {"id": "mp", "name": "魔力", "type": "resource", "min": 0, "description": "施放魔法消耗的资源；纯人类上限为 0。"},
+  "ap": {"id": "ap", "name": "行动点", "type": "turn_resource", "min": 0, "description": "技能等战斗行动额外消耗的资源。"},
+  "physical_attack": {"id": "physical_attack", "name": "基础物攻", "type": "combat", "min": 0},
+  "magic_attack": {"id": "magic_attack", "name": "基础魔攻", "type": "combat", "min": 0},
+  "defense": {"id": "defense", "name": "防御力", "type": "combat", "min": 0},
+  "speed": {"id": "speed", "name": "速度", "type": "combat", "min": 0},
+  "shield": {"id": "shield", "name": "护盾", "type": "equipment_resource", "min": 0},
+  "law_chaos": {"id": "law_chaos", "name": "秩序/混沌", "type": "alignment", "min": -100, "max": 100},
+  "justice_evil": {"id": "justice_evil", "name": "正义/邪恶", "type": "alignment", "min": -100, "max": 100},
+  "corruption": {"id": "corruption", "name": "侵蚀度", "type": "progression", "min": 0, "max": 100}
+}
