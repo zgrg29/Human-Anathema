@@ -1,8 +1,8 @@
 {
-  "service_pistol": {"id": "service_pistol", "name": "旧式短枪", "slot": "weapon", "attack": 4, "ammo_item": "small_round", "buy_price": 24, "tags": ["ranged"]},
-  "fire_axe": {"id": "fire_axe", "name": "消防斧", "slot": "weapon", "attack": 6, "buy_price": 22, "tags": ["melee", "heavy"]},
-  "crowbar": {"id": "crowbar", "name": "短撬棍", "slot": "weapon", "attack": 3, "buy_price": 18, "armor_piercing": 1, "tags": ["melee", "light"]},
-  "pump_shotgun": {"id": "pump_shotgun", "name": "旧式霰弹枪", "slot": "weapon", "attack": 7, "ammo_item": "small_round", "ammo_cost": 2, "buy_price": 36, "tags": ["ranged", "heavy"]},
+  "service_pistol": {"id": "service_pistol", "name": "旧式短枪", "slot": "weapon", "attack": 7, "accuracy": 0.7, "ammo_item": "small_round", "buy_price": 24, "tags": ["ranged"]},
+  "fire_axe": {"id": "fire_axe", "name": "消防斧", "slot": "weapon", "attack": 5, "accuracy": 0.9, "buy_price": 22, "tags": ["melee", "heavy"]},
+  "crowbar": {"id": "crowbar", "name": "短撬棍", "slot": "weapon", "attack": 4, "accuracy": 0.95, "buy_price": 18, "armor_piercing": 1, "tags": ["melee", "light"]},
+  "pump_shotgun": {"id": "pump_shotgun", "name": "旧式霰弹枪", "slot": "weapon", "attack": 10, "accuracy": 0.6, "ammo_item": "small_round", "ammo_cost": 2, "buy_price": 36, "tags": ["ranged", "heavy"]},
   "patched_vest": {"id": "patched_vest", "name": "补丁防弹衣", "slot": "armor", "shield": 5, "buy_price": 20, "tags": ["light"]},
   "scrap_plate": {"id": "scrap_plate", "name": "拼接护板", "slot": "armor", "shield": 8, "buy_price": 32, "tags": ["heavy"]}
 }

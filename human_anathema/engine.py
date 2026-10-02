@@ -1,5 +1,6 @@
 """Pure-Python campaign rules. Inputs and outputs are JSON-serializable dicts."""
 from copy import deepcopy
+import random
 from .catalog import load_catalog
 
 
@@ -15,9 +16,9 @@ class Game:
     def reset(self):
         hero = deepcopy(self.catalog["characters"]["protagonist"])
         self.state = {
-            "version": 2, "location_id": "rookie_village", "player": hero,
+            "version": 3, "location_id": "rookie_village", "player": hero,
             "inventory": {"coin": 90, "small_round": 8, "bandage": 2, "flash_bomb": 1,
-                          "wolf_fang": 0, "wolf_hide": 0, "wolf_blood": 1},
+                          "wolf_blood": 1, "scavenger_ichor": 0, "rust_ichor": 0},
             "equipment": {"weapon": "service_pistol", "armor": "patched_vest"},
             "known_skills": ["aimed_shot"], "trained_skills": [], "training_points": 1,
             "known_magic": [], "battle": None,
@@ -44,8 +45,28 @@ class Game:
         gear = self.catalog["equipment"]
         return gear[self.state["equipment"][slot]] if slot else gear
 
-    def _attack(self, actor, target, power, weapon=None, label="攻击"):
+    def _equip(self, slot, item_id):
+        item = self.catalog["equipment"].get(item_id)
+        self._require(slot in ("weapon", "armor"), "装备槽无效。")
+        self._require(item and item["slot"] == slot, "装备不适用于这个槽位。")
+        current = self.state["equipment"].get(slot)
+        if current != item_id:
+            self._require(self.state["inventory"].get(item_id, 0) > 0, "你没有这件装备。")
+            self.state["inventory"][item_id] -= 1
+            if current:
+                self.state["inventory"][current] = self.state["inventory"].get(current, 0) + 1
+            self.state["equipment"][slot] = item_id
+            if slot == "armor":
+                self._player()["shield_max"] = item["shield"]
+                self._player()["shield"] = min(self._player()["shield"], item["shield"])
+        return item
+
+    def _attack(self, actor, target, power, weapon=None, label="攻击", accuracy=None):
         player_actor = actor is self._player()
+        if player_actor and weapon:
+            hit_chance = max(0.0, min(1.0, accuracy if accuracy is not None else weapon.get("accuracy", 1.0)))
+            if random.random() >= hit_chance:
+                return f"{label}未命中（命中率 {hit_chance:.0%}）。", False
         defense = target["attributes"].get("defense", 0)
         if player_actor and weapon:
             defense = max(0, defense - weapon.get("armor_piercing", 0))
@@ -62,7 +83,7 @@ class Game:
         target["shield"] = shield - absorbed
         hp_loss = damage - absorbed
         target["hp"] = max(0, target["hp"] - hp_loss)
-        return f"{label}造成 {damage} 伤害（护盾吸收 {absorbed}，生命损失 {hp_loss}）。"
+        return f"{label}命中，造成 {damage} 伤害（护盾吸收 {absorbed}，生命损失 {hp_loss}）。", True
 
     def _end_battle(self, events):
         battle = self.state["battle"]
@@ -71,9 +92,11 @@ class Game:
         cleared = self.state["flags"].setdefault("cleared_encounters", [])
         first_clear = encounter_id not in cleared
         if first_clear:
-            for item, count in enemy.get("drops", {}).items():
-                self.state["inventory"][item] = self.state["inventory"].get(item, 0) + count
-                events.append(self._event(f"获得素材：{self.catalog['items'][item]['name']} ×{count}。"))
+            sample_id = self.catalog["enemies"][enemy["id"]].get("sample_id")
+            if sample_id:
+                self.state["inventory"][sample_id] = self.state["inventory"].get(sample_id, 0) + 1
+                sample = self.catalog["samples"][sample_id]
+                events.append(self._event(f"获得{sample['name']} ×1。"))
             reward = self.catalog["encounters"].get(encounter_id, {}).get("coin_reward", 0)
             if reward:
                 self.state["inventory"]["coin"] += reward
@@ -84,9 +107,20 @@ class Game:
             self.state["player"]["experience_notes"] += 1
             events.append(self._event(f"{enemy['name']}被击倒了。获得战斗记录 ×1。"))
         else:
-            events.append(self._event("这是已完成过的遭遇，没有重复报酬、素材或训练点。"))
+            events.append(self._event("这是已完成过的遭遇，没有重复报酬、体液或训练点。"))
         self.state["flags"]["first_victory"] = True
         self.state["battle"] = None
+        self._restore_after_battle()
+        events.append(self._event("战斗结束，HP、MP、Shield 和 AP 已恢复，战斗状态已清除。"))
+
+    def _restore_after_battle(self):
+        player = self._player()
+        player["hp"] = player["attributes"]["max_hp"]
+        player["mp"] = player["mp_max"]
+        player["shield"] = player["shield_max"]
+        player["ap"] = player["ap_max"]
+        player["guarding"] = False
+        player["buffs"] = {}
 
     def _enemy_turn(self, events):
         battle = self.state["battle"]
@@ -106,7 +140,8 @@ class Game:
         heavy = battle["turn"] % 3 == 0
         move = enemy["moves"]["heavy_attack" if heavy else "basic_attack"]
         events.append(self._event(f"{enemy['name']}使用{move['name']}！"))
-        events.append(self._event(self._attack(enemy, self._player(), move.get("power", 0), label=move["name"])))
+        damage_event, _ = self._attack(enemy, self._player(), move.get("power", 0), label=move["name"])
+        events.append(self._event(damage_event))
         battle["turn"] += 1
         self._player()["ap"] = self._player()["ap_max"]
         self._finish_round()
@@ -149,7 +184,9 @@ class Game:
         p = self._player()
         try:
             if kind == "reset":
-                return self.reset()
+                self.reset()
+                events.append(self._event("重生完成，旅程已回到最初状态。"))
+                return self.response(events)
             if kind in ("learn_skill", "reset_skill_training"):
                 self._require(not self.state["battle"], "战斗中不能调整技能配置。")
                 if kind == "learn_skill":
@@ -190,7 +227,8 @@ class Game:
                         ammo_cost = weapon.get("ammo_cost", 1)
                         self._require(self.state["inventory"].get(ammo_item, 0) >= ammo_cost, "弹药不足。")
                         self.state["inventory"][ammo_item] -= ammo_cost
-                    events.append(self._event(self._attack(p, battle["enemy"], 0, weapon, "普通攻击")))
+                    damage_event, _ = self._attack(p, battle["enemy"], 0, weapon, "普通攻击")
+                    events.append(self._event(damage_event))
                 elif kind == "defend":
                     p["guarding"] = True
                     events.append(self._event("你进入防御姿态；下一次受到的伤害减半。"))
@@ -199,6 +237,8 @@ class Game:
                     self._require(skill_id in self.state["known_skills"], "尚未学会这项技能。")
                     skill = self.catalog["skills"][skill_id]
                     self._require(p["ap"] >= skill["ap_cost"], "AP 不足。")
+                    hp_cost = skill.get("hp_cost", 0)
+                    self._require(p["hp"] > hp_cost, f"HP 不足（技能需要至少保留 {hp_cost + 1} 点 HP）。")
                     required_tags = skill.get("weapon_tags", [])
                     weapon = self._gear("weapon")
                     self._require(not required_tags or any(tag in weapon.get("tags", []) for tag in required_tags),
@@ -208,9 +248,13 @@ class Game:
                         ammo_cost = max(skill.get("ammo_cost", 1), weapon.get("ammo_cost", 1))
                         self._require(self.state["inventory"].get(ammo_item, 0) >= ammo_cost, "弹药不足。")
                         self.state["inventory"][ammo_item] -= ammo_cost
+                    p["hp"] -= hp_cost
                     p["ap"] -= skill["ap_cost"]
-                    events.append(self._event(self._attack(p, battle["enemy"], skill["power"], weapon, skill["name"])))
-                    if skill.get("effect") == "stun" and battle["enemy"]["hp"] > 0:
+                    accuracy = min(1.0, weapon.get("accuracy", 1.0) + skill.get("accuracy_bonus", 0))
+                    damage_event, hit = self._attack(p, battle["enemy"], skill["power"], weapon, skill["name"], accuracy)
+                    events.append(self._event(f"消耗 {hp_cost} HP。"))
+                    events.append(self._event(damage_event))
+                    if hit and skill.get("effect") == "stun" and battle["enemy"]["hp"] > 0:
                         battle["skip_enemy_turn"] += 1
                         events.append(self._event(f"{battle['enemy']['name']}被打断，错过本次行动。"))
                 elif kind == "cast":
@@ -241,14 +285,7 @@ class Game:
                         events.append(self._event(f"使用{item['name']}，敌人将错過下次行动。"))
                 elif kind == "equip":
                     slot, item_id = action.get("slot"), action.get("item_id")
-                    self._require(slot in ("weapon", "armor"), "装备槽无效。")
-                    item = self.catalog["equipment"].get(item_id)
-                    self._require(item and item["slot"] == slot, "装备不适用于这个槽位。")
-                    self._require(self.state["inventory"].get(item_id, 0) > 0 or self.state["equipment"].get(slot) == item_id, "你没有这件装备。")
-                    self.state["equipment"][slot] = item_id
-                    if slot == "armor":
-                        p["shield_max"] = item["shield"]
-                        p["shield"] = min(p["shield"], p["shield_max"])
+                    item = self._equip(slot, item_id)
                     events.append(self._event(f"切换装备：{item['name']}。"))
                 elif kind == "inject":
                     sample_id = action.get("sample_id")
@@ -257,7 +294,8 @@ class Game:
                     self._require(self.state["inventory"].get(sample_id, 0) > 0, "没有这种体液样本。")
                     self.state["inventory"][sample_id] -= 1
                     self.state["corruption"] = min(100, self.state.get("corruption", 0) + sample["corruption_gain"])
-                    p["hp"] = min(p["attributes"]["max_hp"], p["hp"] + sample["heal"])
+                    healed = min(sample["heal"], p["attributes"]["max_hp"] - p["hp"])
+                    p["hp"] += healed
                     p["mp_max"] = max(p["mp_max"], sample.get("mp_max", 0))
                     p["mp"] = min(p["mp_max"], p["mp"] + sample.get("mp_restore", 0))
                     for skill_id in sample.get("grants_skills", []):
@@ -266,12 +304,17 @@ class Game:
                     for spell_id in sample.get("grants_magic", []):
                         if spell_id not in self.state["known_magic"]:
                             self.state["known_magic"].append(spell_id)
+                    alignment = p.setdefault("alignment", {"law_chaos": 0, "justice_evil": 0})
+                    for axis in ("law_chaos", "justice_evil"):
+                        alignment[axis] = max(-100, min(100, alignment.get(axis, 0) + sample.get(axis, 0)))
                     for buff in sample.get("buffs", []):
                         p.setdefault("buffs", {})[buff["buff_id"]] = buff["duration"]
-                    events.append(self._event(f"注射{sample['name']}：恢复 {sample['heal']} HP，侵蚀度 +{sample['corruption_gain']}%。"))
+                    events.append(self._event(f"注射{sample['name']}：恢复 {healed} HP，阵营变化 Law/Chaos {sample.get('law_chaos', 0):+d}、Justice/Evil {sample.get('justice_evil', 0):+d}，侵蚀度 +{sample['corruption_gain']}%。"))
                 else:  # flee
                     self.state["battle"] = None
+                    self._restore_after_battle()
                     events.append(self._event("你撤出了战斗。"))
+                    events.append(self._event("战斗结束，HP、MP、Shield 和 AP 已恢复，战斗状态已清除。"))
                 if self.state["battle"] and battle["enemy"]["hp"] <= 0:
                     self._end_battle(events)
                 elif self.state["battle"]:
@@ -279,14 +322,7 @@ class Game:
             elif kind in ("equip", "inject"):
                 if kind == "equip":
                     slot, item_id = action.get("slot"), action.get("item_id")
-                    self._require(slot in ("weapon", "armor"), "装备槽无效。")
-                    item = self.catalog["equipment"].get(item_id)
-                    self._require(item and item["slot"] == slot, "装备不适用于这个槽位。")
-                    self._require(self.state["inventory"].get(item_id, 0) > 0 or self.state["equipment"].get(slot) == item_id, "你没有这件装备。")
-                    self.state["equipment"][slot] = item_id
-                    if slot == "armor":
-                        p["shield_max"] = item["shield"]
-                        p["shield"] = min(p["shield"], p["shield_max"])
+                    item = self._equip(slot, item_id)
                     events.append(self._event(f"切换装备：{item['name']}。"))
                 else:
                     sample_id = action.get("sample_id")
@@ -302,57 +338,44 @@ class Game:
                         if skill_id not in self.state["known_skills"]: self.state["known_skills"].append(skill_id)
                     for spell_id in sample.get("grants_magic", []):
                         if spell_id not in self.state["known_magic"]: self.state["known_magic"].append(spell_id)
+                    alignment = p.setdefault("alignment", {"law_chaos": 0, "justice_evil": 0})
+                    for axis in ("law_chaos", "justice_evil"):
+                        alignment[axis] = max(-100, min(100, alignment.get(axis, 0) + sample.get(axis, 0)))
                     for buff in sample.get("buffs", []): p.setdefault("buffs", {})[buff["buff_id"]] = buff["duration"]
-                    events.append(self._event(f"注射{sample['name']}：恢复 {healed} HP，侵蚀度 +{sample['corruption_gain']}%。"))
-            elif kind in ("buy", "sell", "extract", "craft", "rest"):
+                    events.append(self._event(f"注射{sample['name']}：恢复 {healed} HP，阵营变化 Law/Chaos {sample.get('law_chaos', 0):+d}、Justice/Evil {sample.get('justice_evil', 0):+d}，侵蚀度 +{sample['corruption_gain']}%。"))
+            elif kind in ("buy", "sell"):
                 self._require(not self.state["battle"], "战斗中不能使用村庄设施。")
-                facility_id = action.get("facility_id", "village_shop" if kind in ("buy", "sell", "extract") else "net_cafe")
+                facility_id = action.get("facility_id", "village_shop")
                 facilities = self.catalog["facilities"]
                 facility = facilities.get(facility_id)
                 self._require(facility is not None, "找不到这个设施。")
                 self._require(self.state["location_id"] in facility["locations"], "你不在这个设施所在地点。")
-                if kind == "rest":
-                    cost = facility["rest_cost"]
-                    self._require(self.state["inventory"]["coin"] >= cost, f"休息需要 {cost} 枚硬币。")
-                    self.state["inventory"]["coin"] -= cost
-                    p["hp"] = p["attributes"]["max_hp"]
-                    p["mp"] = p["mp_max"]
-                    p["shield"] = p["shield_max"]
-                    events.append(self._event(f"你在网咖休息，HP/MP 恢复，护甲 Shield 已充满。支付 {cost} 枚硬币。"))
-                elif kind in ("extract", "craft"):
-                    recipe_id = action.get("recipe_id", "extract_hound_blood")
-                    recipe = self.catalog["recipes"].get(recipe_id)
-                    self._require(recipe is not None and recipe.get("kind", "extract") == kind, "没有这项制作/提取配方。")
-                    self._require(all(self.state["inventory"].get(k, 0) >= v for k, v in recipe["inputs"].items()), "素材不足，无法提取。")
-                    for key, value in recipe["inputs"].items():
-                        self.state["inventory"][key] -= value
-                    for key, value in recipe["outputs"].items():
-                        self.state["inventory"][key] = self.state["inventory"].get(key, 0) + value
-                    events.append(self._event(f"提取完成：{recipe['name']}。"))
+                item_id = action.get("item_id")
+                quantity = action.get("quantity", 1)
+                self._require(isinstance(quantity, int) and quantity > 0, "数量必须是正整数。")
+                if kind == "buy":
+                    self._require(item_id in facility["stock"], "商店不出售这个物品。")
+                    price = self.catalog["items"].get(item_id, {}).get("buy_price", self.catalog["equipment"].get(item_id, {}).get("buy_price", 0))
+                    affordable = self.state["inventory"]["coin"] // price if price > 0 else 0
+                    self._require(price > 0 and affordable > 0, "硬币不足或商品无价格。")
+                    quantity = min(quantity, affordable)
+                    total = price * quantity
+                    self.state["inventory"]["coin"] -= total
+                    self.state["inventory"][item_id] = self.state["inventory"].get(item_id, 0) + quantity
+                    events.append(self._event(f"购买{self.catalog['items'].get(item_id, self.catalog['equipment'].get(item_id))['name']} ×{quantity}，支付 {total} 枚硬币。"))
                 else:
-                    item_id = action.get("item_id")
-                    quantity = action.get("quantity", 1)
-                    self._require(isinstance(quantity, int) and quantity > 0, "数量必须是正整数。")
-                    if kind == "buy":
-                        self._require(item_id in facility["stock"], "商店不出售这个物品。")
-                        price = self.catalog["items"].get(item_id, {}).get("buy_price", self.catalog["equipment"].get(item_id, {}).get("buy_price", 0))
-                        affordable = self.state["inventory"]["coin"] // price if price > 0 else 0
-                        self._require(price > 0 and affordable > 0, "硬币不足或商品无价格。")
-                        quantity = min(quantity, affordable)
-                        total = price * quantity
-                        self.state["inventory"]["coin"] -= total
-                        self.state["inventory"][item_id] = self.state["inventory"].get(item_id, 0) + quantity
-                        events.append(self._event(f"购买{self.catalog['items'].get(item_id, self.catalog['equipment'].get(item_id))['name']} ×{quantity}，支付 {total} 枚硬币。"))
-                    else:
-                        self._require(item_id in facility["buyback"], "商店不收购这个物品。")
-                        self._require(self.state["inventory"].get(item_id, 0) > 0, "没有可出售的物品。")
-                        price = facility["buyback"][item_id]
-                        quantity = min(quantity, self.state["inventory"][item_id])
-                        total = price * quantity
-                        self.state["inventory"][item_id] -= quantity
-                        self.state["inventory"]["coin"] += total
-                        item = self.catalog["items"].get(item_id, self.catalog["equipment"].get(item_id, {}))
-                        events.append(self._event(f"出售{item['name']} ×{quantity}，获得 {total} 枚硬币。"))
+                    self._require(self.state["inventory"].get(item_id, 0) > 0, "没有可出售的物品。")
+                    item = self.catalog["items"].get(item_id, self.catalog["equipment"].get(item_id, {}))
+                    self._require(item_id in facility.get("buyback", {}) or item_id in self.catalog["equipment"], "商店不收购这个物品。")
+                    price = item.get("buy_price", facility.get("buyback", {}).get(item_id, 0))
+                    self._require(price > 0, "商店不收购这个物品。")
+                    quantity = min(quantity, self.state["inventory"][item_id])
+                    if item_id in self.catalog["equipment"]:
+                        self._require(item_id not in self.state["equipment"].values(), "请先换下这件装备再出售。")
+                    total = price * quantity
+                    self.state["inventory"][item_id] -= quantity
+                    self.state["inventory"]["coin"] += total
+                    events.append(self._event(f"出售{item['name']} ×{quantity}，获得 {total} 枚硬币。"))
             else:
                 raise GameError("当前不能执行这个行动。")
             return self.response(events)

@@ -16,7 +16,11 @@ def show(game):
     print("\n" + "=" * 64)
     print(f"{loc['name']} | {loc['description']}")
     print(f"{p['name']} HP {p['hp']}/{p['attributes']['max_hp']}  Shield {p['shield']}/{p['shield_max']}  MP {p['mp']}/{p['mp_max']}  AP {p['ap']}/{p['ap_max']}")
-    print(f"装备：{gear[s['equipment']['weapon']]['name']} / {gear[s['equipment']['armor']]['name']}  硬币：{s['inventory']['coin']}")
+    weapon = gear[s['equipment']['weapon']]
+    armor = gear[s['equipment']['armor']]
+    print(f"装备：{weapon['name']}（攻击 +{weapon['attack']}，命中 {weapon.get('accuracy', 1):.0%}" +
+          (f"，弹药 {weapon.get('ammo_cost', 1)} 发/次" if weapon.get('ammo_item') else "") +
+          f"） / {armor['name']}（Shield {armor['shield']}）  硬币：{s['inventory']['coin']}")
     bag = [f"{game.catalog['items'][k]['name']}×{v}" for k, v in s['inventory'].items()
            if k != 'coin' and v and k in game.catalog['items']]
     bag += [f"{gear[k]['name']}×{v}" for k, v in s['inventory'].items()
@@ -88,6 +92,13 @@ def migrate_save(state):
         state["training_points"] = state.get("training_points", 0) + 1
         state.setdefault("trained_skills", [])
         state["version"] = 2
+    if state.get("version", 1) < 3:
+        inventory = state.setdefault("inventory", {})
+        inventory.pop("wolf_fang", None)
+        inventory.pop("wolf_hide", None)
+        inventory.setdefault("scavenger_ichor", 0)
+        inventory.setdefault("rust_ichor", 0)
+        state["version"] = 3
     state.setdefault("flags", {}).setdefault("cleared_encounters", [])
     return state
 
@@ -106,7 +117,15 @@ def equip_menu(game):
     if not choices:
         print("没有可切换的装备。")
         return
-    labels = [f"{item['name']}（{'武器' if item['slot'] == 'weapon' else '防具'}）" for _, item in choices]
+    labels = []
+    for _, item in choices:
+        if item["slot"] == "weapon":
+            details = f"攻击 +{item['attack']}，命中 {item.get('accuracy', 1):.0%}"
+            if item.get("ammo_item"):
+                details += f"，弹药 {item.get('ammo_cost', 1)} 发/次"
+        else:
+            details = f"Shield {item['shield']}"
+        labels.append(f"{item['name']}（{details}）")
     labels.append("返回")
     selected = choose("选择要装备的物品：", labels)
     if selected < len(choices):
@@ -132,7 +151,19 @@ def ability_menu(game, kind):
     if not ids:
         print("尚未学会相关能力。")
         return
-    labels = [catalog[key]["name"] for key in ids] + ["返回"]
+    labels = []
+    for key in ids:
+        ability = catalog[key]
+        if kind == "skill":
+            details = f"HP -{ability.get('hp_cost', 0)}，AP -{ability['ap_cost']}，威力 +{ability['power']}"
+            if ability.get("ammo_item"):
+                details += f"，弹药 {ability.get('ammo_cost', 1)} 发"
+            if ability.get("accuracy_bonus"):
+                details += f"，命中率 +{ability['accuracy_bonus']:.0%}"
+        else:
+            details = f"MP -{ability['mp_cost']}，威力 {ability['power']}"
+        labels.append(f"{ability['name']}（{details}）")
+    labels.append("返回")
     selected = choose("选择要使用的能力：", labels)
     if selected < len(ids):
         field = "skill_id" if kind == "skill" else "spell_id"
@@ -141,7 +172,7 @@ def ability_menu(game, kind):
 
 
 def shop_menu(game):
-    choice = choose("桥下杂货铺：", ["购买", "出售物品/素材/装备", "返回"])
+    choice = choose("桥下杂货铺：", ["购买", "出售物品/体液/装备", "返回"])
     if choice == 2:
         return
     facility = game.catalog["facilities"]["village_shop"]
@@ -160,30 +191,20 @@ def shop_menu(game):
             quantity = quantity_input()
             act(game, {"type": "buy", "item_id": rows[selected][0], "quantity": quantity})
     else:
-        rows = [(item_id, price) for item_id, price in facility["buyback"].items()
-                if game.state["inventory"].get(item_id, 0) > 0]
+        rows = [(item_id, game.catalog["items"].get(item_id, game.catalog["equipment"].get(item_id, {})).get("buy_price", facility["buyback"].get(item_id, 0)))
+                for item_id in game.state["inventory"]
+                if game.state["inventory"].get(item_id, 0) > 0 and
+                (item_id in facility["buyback"] or item_id in game.catalog["equipment"])]
         if not rows:
-            print("没有可出售的素材。")
+            print("没有可出售的物品。")
             return
         labels = [f"{game.catalog['items'].get(item_id, game.catalog['equipment'].get(item_id, {}))['name']}（持有 {game.state['inventory'][item_id]}，售价 {price}/件）"
                   for item_id, price in rows] + ["返回"]
-        selected = choose("选择要出售的物品、素材或装备：", labels)
+        selected = choose("选择要出售的物品、体液或装备：", labels)
         if selected < len(rows):
             item_id = rows[selected][0]
             quantity = quantity_input(game.state["inventory"][item_id])
             act(game, {"type": "sell", "item_id": item_id, "quantity": quantity})
-
-
-def recipe_menu(game, kind):
-    rows = [(recipe_id, recipe) for recipe_id, recipe in game.catalog["recipes"].items()
-            if recipe.get("kind", "extract") == kind]
-    if not rows:
-        print("目前没有可用配方。")
-        return
-    labels = [recipe["name"] for _, recipe in rows] + ["返回"]
-    selected = choose("选择配方：", labels)
-    if selected < len(rows):
-        act(game, {"type": kind, "recipe_id": rows[selected][0]})
 
 
 def training_menu(game):
@@ -203,16 +224,16 @@ def training_menu(game):
         act(game, {"type": "reset_skill_training"})
 
 
-def workshop_menu(game):
-    selected = choose("工坊服务：", ["提取体液", "制作装备", "返回"])
+def settings_menu(game):
+    selected = choose("设置：", ["重生", "返回"])
     if selected == 0:
-        recipe_menu(game, "extract")
-    elif selected == 1:
-        recipe_menu(game, "craft")
+        confirm = choose("重生会清除当前旅程的全部进度，并回到最初状态。确定继续？", ["确认重生", "取消"])
+        if confirm == 0:
+            act(game, {"type": "reset"})
 
 
 def village_turn(game):
-    selected = choose("村庄行动：", ["出村挑战", "商店", "网咖充能休息（全恢复，8 硬币）", "装备", "注射体液", "工坊", "技能训练/重置", "状态", "结束游戏"])
+    selected = choose("村庄行动：", ["出村挑战", "商店", "装备", "注射体液", "技能训练/重置", "状态", "设置", "结束游戏"])
     if selected == 0:
         encounters = list(game.catalog["encounters"].items())
         if not encounters:
@@ -221,19 +242,17 @@ def village_turn(game):
         cleared = game.state["flags"].get("cleared_encounters", [])
         labels = []
         for key, encounter in encounters:
-            reward_label = "重复挑战，无奖励" if key in cleared else f"报酬 {encounter.get('coin_reward', 0)} 枚"
+            reward_label = "重复挑战，无奖励" if key in cleared else f"首胜 {encounter.get('coin_reward', 0)} 枚 + 专属体液"
             labels.append(f"{encounter['name']}（{reward_label}）")
         labels.append("返回")
-        pick = choose("选择一项尚未完成的遭遇：", labels)
+        pick = choose("选择任务或练习遭遇：", labels)
         if pick < len(encounters):
             act(game, {"type": "start_encounter", "encounter_id": encounters[pick][0]})
     elif selected == 1:
         shop_menu(game)
     elif selected == 2:
-        act(game, {"type": "rest", "facility_id": "net_cafe"})
-    elif selected == 3:
         equip_menu(game)
-    elif selected == 4:
+    elif selected == 3:
         samples = [(key, sample) for key, sample in game.catalog["samples"].items()
                    if game.state["inventory"].get(key, 0) > 0]
         if not samples:
@@ -243,12 +262,12 @@ def village_turn(game):
             pick = choose("选择体液样本：", labels)
             if pick < len(samples):
                 act(game, {"type": "inject", "sample_id": samples[pick][0]})
-    elif selected == 5:
-        workshop_menu(game)
-    elif selected == 6:
+    elif selected == 4:
         training_menu(game)
-    elif selected == 7:
+    elif selected == 5:
         return True
+    elif selected == 6:
+        settings_menu(game)
     else:
         return False
     return True

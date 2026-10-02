@@ -1,3 +1,5 @@
 {
-  "wolf_blood": {"id": "wolf_blood", "name": "猎犬体液样本", "source_enemy": "drain_hound", "heal": 4, "mp_max": 4, "mp_restore": 4, "corruption_gain": 20, "grants_magic": ["blood_pulse"], "grants_skills": [], "buffs": [{"buff_id": "predator_surge", "duration": 3}]}
+  "wolf_blood": {"id": "wolf_blood", "name": "幼猎犬掠食体液", "source_enemy": "drain_hound", "heal": 4, "mp_max": 4, "mp_restore": 4, "corruption_gain": 20, "law_chaos": -18, "justice_evil": -14, "grants_magic": ["blood_pulse"], "grants_skills": [], "buffs": [{"buff_id": "predator_surge", "duration": 3}]},
+  "scavenger_ichor": {"id": "scavenger_ichor", "name": "拾骨者腐液", "source_enemy": "sewer_scavenger", "heal": 3, "mp_max": 2, "mp_restore": 2, "corruption_gain": 16, "law_chaos": -12, "justice_evil": 8, "grants_magic": [], "grants_skills": [], "buffs": []},
+  "rust_ichor": {"id": "rust_ichor", "name": "锈甲搬运工铁锈体液", "source_enemy": "rust_bruiser", "heal": 6, "mp_max": 0, "mp_restore": 0, "corruption_gain": 18, "law_chaos": 16, "justice_evil": -12, "grants_magic": [], "grants_skills": [], "buffs": []}
 }

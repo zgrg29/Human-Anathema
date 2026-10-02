@@ -1,6 +1,6 @@
 {
-  "aimed_shot": {"id": "aimed_shot", "name": "瞄准射击", "description": "消耗 1 AP 和弹药，以远程武器打出稳定的额外伤害。", "ap_cost": 1, "power": 3, "ammo_item": "small_round", "ammo_cost": 1, "weapon_tags": ["ranged"], "target": "single_enemy"},
-  "heavy_swing": {"id": "heavy_swing", "name": "破势重击", "description": "消耗 2 AP；近战重击，适合压制高防敌人。", "ap_cost": 2, "power": 6, "weapon_tags": ["melee"], "target": "single_enemy"},
-  "quick_strike": {"id": "quick_strike", "name": "迅捷连刺", "description": "消耗 1 AP；近战轻击，以较低成本追加伤害。", "ap_cost": 1, "power": 1, "weapon_tags": ["melee"], "target": "single_enemy"},
-  "interrupt_strike": {"id": "interrupt_strike", "name": "截击", "description": "消耗 1 AP；近战打断，令敌人错过本次行动。", "ap_cost": 1, "power": 0, "weapon_tags": ["melee"], "effect": "stun", "target": "single_enemy"}
+  "aimed_shot": {"id": "aimed_shot", "name": "瞄准射击", "description": "消耗 HP、AP 和弹药；瞄准后提高命中率并造成额外伤害。", "hp_cost": 2, "ap_cost": 1, "power": 3, "accuracy_bonus": 0.2, "ammo_item": "small_round", "ammo_cost": 1, "weapon_tags": ["ranged"], "target": "single_enemy"},
+  "heavy_swing": {"id": "heavy_swing", "name": "破势重击", "description": "消耗 HP 和 2 AP；以高伤害近战重击压制敌人。", "hp_cost": 3, "ap_cost": 2, "power": 6, "weapon_tags": ["melee"], "target": "single_enemy"},
+  "quick_strike": {"id": "quick_strike", "name": "迅捷连刺", "description": "消耗少量 HP 和 1 AP；以近战快速追加伤害。", "hp_cost": 1, "ap_cost": 1, "power": 1, "weapon_tags": ["melee"], "target": "single_enemy"},
+  "interrupt_strike": {"id": "interrupt_strike", "name": "截击", "description": "消耗 HP 和 1 AP；命中后打断敌人本次行动。", "hp_cost": 3, "ap_cost": 1, "power": 0, "weapon_tags": ["melee"], "effect": "stun", "target": "single_enemy"}
 }

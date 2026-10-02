@@ -2,7 +2,7 @@
   "small_round": {"id": "small_round", "name": "手枪弹", "kind": "ammo", "buy_price": 2},
   "bandage": {"id": "bandage", "name": "急救绷带", "kind": "consumable", "effect": "heal", "power": 5, "buy_price": 8},
   "flash_bomb": {"id": "flash_bomb", "name": "闪光弹", "kind": "consumable", "effect": "stun", "power": 1, "buy_price": 12},
-  "wolf_fang": {"id": "wolf_fang", "name": "猎犬尖牙", "kind": "material", "sell_price": 5},
-  "wolf_hide": {"id": "wolf_hide", "name": "猎犬皮片", "kind": "material", "sell_price": 7},
-  "wolf_blood": {"id": "wolf_blood", "name": "猎犬体液样本", "kind": "sample", "sell_price": 10}
+  "wolf_blood": {"id": "wolf_blood", "name": "幼猎犬掠食体液", "kind": "sample", "sell_price": 10},
+  "scavenger_ichor": {"id": "scavenger_ichor", "name": "拾骨者腐液", "kind": "sample", "sell_price": 10},
+  "rust_ichor": {"id": "rust_ichor", "name": "锈甲搬运工铁锈体液", "kind": "sample", "sell_price": 10}
 }

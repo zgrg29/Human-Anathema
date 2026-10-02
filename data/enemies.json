@@ -6,7 +6,7 @@
       "basic_attack": {"id": "hound_bite", "name": "试探撕咬", "power": 0, "damage_type": "physical"},
       "heavy_attack": {"id": "hound_lunge", "name": "蓄力扑咬", "power": 3, "damage_type": "physical"}
     },
-    "drops": {"wolf_fang": 2, "wolf_hide": 2}
+    "sample_id": "wolf_blood"
   },
   "sewer_scavenger": {
     "id": "sewer_scavenger", "name": "污渠拾骨者", "kind": "monster", "hp": 15, "shield": 3,
@@ -15,7 +15,7 @@
       "basic_attack": {"id": "scavenger_snap", "name": "骨钩啄击", "power": 0, "damage_type": "physical"},
       "heavy_attack": {"id": "scavenger_rake", "name": "翻身钩爪", "power": 2, "damage_type": "physical"}
     },
-    "drops": {"wolf_fang": 1, "wolf_hide": 2}
+    "sample_id": "scavenger_ichor"
   },
   "rust_bruiser": {
     "id": "rust_bruiser", "name": "锈甲搬运工", "kind": "monster", "hp": 22, "shield": 5,
@@ -24,6 +24,6 @@
       "basic_attack": {"id": "bruiser_shove", "name": "沉重推撞", "power": 0, "damage_type": "physical"},
       "heavy_attack": {"id": "bruiser_slam", "name": "蓄力砸击", "power": 4, "damage_type": "physical"}
     },
-    "drops": {"wolf_fang": 2, "wolf_hide": 3}
+    "sample_id": "rust_ichor"
   }
 }

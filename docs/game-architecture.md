@@ -10,7 +10,7 @@ Python 负责规则、战斗状态与内容读取；终端和未来 Godot 客户
 - `human_anathema/catalog.py`：加载 `data/*.json` 内容定义。
 - `human_anathema/cli.py`：终端演示客户端；输入命令后调用引擎。
 - `human_anathema/api.py`：HTTP/JSON 适配器，供 Godot 或其他客户端调用。
-- `data/`：人物、敌人、技能、魔法、装备、物品、体液样本、Buff、属性、地点、场地、遭遇、设施和配方定义。
+- `data/`：人物、敌人、技能、魔法、装备、物品、体液样本、Buff、属性、地点、场地、遭遇和设施定义。
 
 内容使用稳定的英文 `id` 互相引用；`name`、`description` 是可替换的显示文本。客户端应保存 ID 和状态，不要依赖名称解析。JSON 定义可加入 `icon`、`portrait`、`scene` 等 Godot 资源引用字段，Python 核心会把它们当普通内容数据保留。
 
@@ -20,7 +20,7 @@ Python 负责规则、战斗状态与内容读取；终端和未来 Godot 客户
 - HTTP API：`py -m human_anathema.api`
 - 服务监听 `127.0.0.1:8765`，无第三方依赖。
 
-当前垂直切片从灰桥新手村开始：玩家可挑战不同敌人；首胜获得一次性硬币报酬、素材和训练点，已完成遭遇可重玩但不重复发放这些奖励。桥下杂货铺支持按数量买卖素材、消耗品和装备；猎犬体液样本可以注射或出售。网咖支付硬币恢复 HP、MP 和 Shield。体液注射会恢复状态、提高侵蚀度并解锁血色脉冲魔法。基础流程是单人战斗；场地数据已独立定义，尚未实现格子移动。
+当前垂直切片从灰桥新手村开始：玩家可挑战不同敌人；首胜获得一次性硬币报酬、对应敌人体液和训练点，已完成遭遇可重玩但不重复发放奖励。桥下杂货铺支持按数量买卖消耗品、体液和装备，装备出售价与购买价相同。每场战斗结束自动恢复 HP、MP、Shield 和 AP。体液注射会恢复状态、改变阵营坐标、提高侵蚀度并解锁血色脉冲魔法。基础流程是单人战斗；场地数据已独立定义，尚未实现格子移动。
 
 每场战斗在开始时保存战前状态快照。主人公 HP 归零时，规则引擎恢复快照并结束该场战斗；终端存档在战斗中也保留快照，因此载入存档后可以继续战斗，或在死亡恢复后继续旅程。旧版死亡存档没有快照，客户端会清除失败战斗并恢复 HP/Shield，让旅程保持可玩。
 
@@ -49,10 +49,7 @@ Python 负责规则、战斗状态与内容读取；终端和未来 Godot 客户
 {"type":"equip","slot":"weapon","item_id":"fire_axe"}
 {"type":"inject","sample_id":"wolf_blood"}
 {"type":"buy","item_id":"bandage"}
-{"type":"sell","item_id":"wolf_fang"}
-{"type":"extract","recipe_id":"extract_hound_blood"}
-{"type":"craft","recipe_id":"craft_scrap_plate"}
-{"type":"rest","facility_id":"net_cafe"}
+{"type":"sell","item_id":"wolf_blood"}
 ```
 
 `state` 顶层字段含 `version`、`location_id`、`player`、`inventory`、`equipment`、`known_skills`、`known_magic`、`battle`、`flags`、`log`。战斗中的 `battle.enemy` 是遭遇敌人的运行时副本；修改它不会改写静态目录。
